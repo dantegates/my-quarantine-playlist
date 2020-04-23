@@ -15,7 +15,7 @@ songs should be included.
 
 After a few weeks my wife was surprised to see that I was still removing songs
 from the playlist and that there were yet songs which hadn't been played. Since
-this is a probabilistic experiment, this raised some interesting questions.
+my "curation process" is probabalistic this prompted some interesting questions.
 
 For example, without listening to the entire playlist, can I estimate
 
@@ -23,10 +23,16 @@ For example, without listening to the entire playlist, can I estimate
 1. How many songs are left that I'm going to remove?
 2. When I've removed all songs from the playlist?
 
+We'll address each of these questions in turn, with some basic statistical principles
+that can be evaluated on a (scientific) calculator. I've tried to keep the math light
+throughout the main body of the post so as not to loose sight of the problem solving.
+For those interested, I've tried to capture the intuition behind the solutions in the
+appendix at the end.
+
 # Where are we?
 
 [Bagging](https://en.wikipedia.org/wiki/Bootstrap_aggregating),
-the generalization of Random Forests and which stands for "bootsrap aggregating",
+the generalization of Random Forests and which stands for "bootstrap aggregating",
 is not a bad place to start when thinking about answering the first question above.
 In bagging, one samples with replacement from a given data set to create $m$ new data sets,
 trains a model on each of these new trainings sets and then aggregates the results.
@@ -120,11 +126,11 @@ This is because the moment a *bad* song plays it is immediately known that $p\no
 Thus the only value in our calculation that changes from one sample to the next is $n$,
 and we can do the calculations for $n=1\ldots$ *before* sampling.
 
-Given $n$ trials with 0 songs found to be deleted we can calculate the posterior of $p$
+Given $n$ trials with 0 songs found to be deleted we can calculate the mean posterior of $p$
 as
 
 $$
-P(p|n,\alpha=1,\beta=20)=\frac{1}{21 + n}
+E[P(p|n,\alpha=1,\beta=20)]=\frac{1}{21 + n}
 $$
 
 The following plot shows how our estimate of $p$ is updated after $n$ consecutive "not *bad*"
@@ -184,3 +190,91 @@ $$
 Of course, there's always Wolfram Alpha for those, like myself, whose calculus skills are a bit
 rusty, but recognizing that this is well studied problem gives us
 access to a bit more context and might help point us to other useful resources.
+
+# Appendix
+
+## Resources
+
+If the lesson learned here is to seek to familiarize oneself with foundations of data science and classic industry
+use cases, reading is one of the best ways to accomplish this goal. In fact this post inspired me to
+keep a running list of some of the resources I routinely visit to keep in touch with the industry at large
+[here](http://dantegates.github.io/resources/). Hopefully others may find this list useful.
+
+## Hints on deriving the expressions above
+
+### Counting the number of unique examples
+
+The external resources I linked to above to provide some helpful guidance on some of the
+algebra for deriving the equations above, however these links don't capture the intuition
+behind the derivations. I'll try to provide some hints in that regard here.
+
+For deriving the expected value of the unique number of samples it's useful to remember
+that it's sometimes easier to calculate the probability of an event *not* happening (known
+as the complement) than the probability that it does.
+This is almost always true if the complement can be expressed as "The chance of
+$X$ and $Y$ and $Z$" whereas the event itself is expressed as "The chance of $A$, or $B$, or $C$, or $A$ *and* $B$, ...".
+This is because if $X,Y,Z$ are all independent events the probability of the complement
+is just the product of $P(X)P(Y)P(Z)$ which is usually much simpler than resorting to
+using combinations or permutations to calculate the event.
+
+Thus if we want to calculate the probability that the example $x_{i}$ is in our samples $S$, it's
+easier to work this out as
+
+$$
+\begin{align*}
+P(x_{i}\text{ is in } S)&=1 - P(x_{i}\text{ is not in } S)\\
+&=1-P(x_{i}\text{ was not first sample, and not second sample,} \ldots\text{and not $n^{th}$ sample})\\
+&=1-\left(\frac{N-1}{N}\right)^n\\
+&=1-\left(1-\frac{1}{N}\right)^n
+\end{align*}
+$$
+
+### Deriving the beta-binomial posterior
+
+Let's write out the complete beta-binomial model.
+
+$$
+\begin{align*}
+&D=(n,s)&\text{ These are observed and fixed for all calculations.}\\
+&P(p)=\frac{p^{\alpha-1}(1-p)^{\beta-1}}{B(\alpha,\beta)} &\text {This is our prior, $\alpha,\beta$ are fixed for all calculations.} \\
+&P(D\vert p)={n\choose s} p^{s}(1-p)^{n-s} &\text{This is the binomial likelihood, and is determined by the experiment.}\\
+&P(D)=\int_{0}^{1}{q^{n}(1-q)^{n-s}\ \text{d}q} &\text{The likelihood of the data, constant for all $p$}
+\end{align*}
+$$
+
+Recalling the identity for $P(D)$ mentioned previously, we can plug these values into Bayes formula
+and simplify to get
+
+$$
+P(p\vert D)=\frac{ {n\choose s}p^{\alpha+s-1}(1-p)^{\beta+n-s-1}}{B(s,n-s)B(\alpha,\beta)}
+$$
+
+The algebra here is not terrible difficult. The challenge is understanding what we do and
+don't need in the equation above.
+
+Ignoring the terms which are fixed for all $p$ we have
+
+$$
+P(p\vert D)\propto p^{\alpha+s-1}(1-p)^{\beta+n-s-1}
+$$
+
+Why is this useful? Because [PDFs](https://en.wikipedia.org/wiki/Probability_density_function) represent *relative probabilities*. Since we have just demonstrated that the PDF above
+is *proportional to* the PDF of the beta distribution $\text{Beta}(\alpha^{\prime},\beta^{\prime})$, where
+$\alpha^{\prime}=\alpha+s$ and $\beta^{\prime}=\beta+n-s$, we can safely ingore
+the term ${n\choose s}(B(s,n-s)B(\alpha,\beta))^{-1}$ since it contributes nothing in terms of *relative*
+probability. This is why $P(D)$ is often referred to as simply a normalizing constant since
+it guarantees that $\int_{0}^{1}{P(p\vert D)\ \text{d}p}=1$ but contributes nothing else to the
+PDF.
+
+Now that we've identified $\text{Beta}(\alpha^{\prime},\beta^{\prime})$ is the posterior distribution
+we can estimate $p$ from the mean of this distribution
+
+$$
+\frac{\alpha+s}{\alpha+\beta+n-s}
+$$
+
+which reduces to the our running estimate of $p$ as $n$ increases above when $s=0$.
+
+This same reasoning is why we could safely ignore the uniform prior, $P(p)=c$, when
+we worked out the posterior probability of the proportion of *bad* songs remaining in
+the playlist.
