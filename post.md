@@ -134,7 +134,10 @@ E[P(p|n,\alpha=1,\beta=20)]=\frac{1}{21 + n}
 $$
 
 The following plot shows how our estimate of $p$ is updated after $n$ consecutive "not *bad*"
-songs play.
+songs play. The expectation of the prior probability is included here, which gives us a nice
+visual of what John Krusche means when he says Bayesian inference is about ["reallocation of
+belief"](https://pdfs.semanticscholar.org/dea6/0927efbd1f284b4132eae3461ea7ce0fb62a.pdf).
+Keep in mind the axes here have completely different meanings than the plots above.
 
 ![](./beta.png)
 
@@ -204,18 +207,19 @@ keep a running list of some of the resources I routinely visit to keep in touch 
 
 ### Counting the number of unique examples
 
-The external resources I linked to above to provide some helpful guidance on some of the
-algebra for deriving the equations above, however these links don't capture the intuition
+The external resources I linked to above provide some helpful guidance on the identities
+and algebra required to derive the equations above. However these links don't capture the intuition
 behind the derivations. I'll try to provide some hints in that regard here.
 
 For deriving the expected value of the unique number of samples it's useful to remember
 that it's sometimes easier to calculate the probability of an event *not* happening (known
 as the complement) than the probability that it does.
-This is almost always true if the complement can be expressed as "The chance of
-$X$ and $Y$ and $Z$" whereas the event itself is expressed as "The chance of $A$, or $B$, or $C$, or $A$ *and* $B$, ...".
+This is almost always true if the complement can be expressed without using the word
+"or". For example "The chance of $X$ and $Y$ and $Z$" instead
+of "The chance of $A$, or $B$, or $C$, or $A$ *and* $B$, ...".
 This is because if $X,Y,Z$ are all independent events the probability of the complement
-is just the product of $P(X)P(Y)P(Z)$ which is usually much simpler than resorting to
-using combinations or permutations to calculate the event.
+is can be calculated simply as the product of $P(X)P(Y)P(Z)$ without having to resort
+to combinations or permutations.
 
 Thus if we want to calculate the probability that the example $x_{i}$ is in our samples $S$, it's
 easier to work this out as
@@ -249,7 +253,7 @@ $$
 P(p\vert D)=\frac{ {n\choose s}p^{\alpha+s-1}(1-p)^{\beta+n-s-1}}{B(s,n-s)B(\alpha,\beta)}
 $$
 
-The algebra here is not terrible difficult. The challenge is understanding what we do and
+The algebra here is not terribly difficult. The challenge is understanding what we do and
 don't need in the equation above.
 
 Ignoring the terms which are fixed for all $p$ we have
